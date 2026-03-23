@@ -3,47 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Media Flow Pro</title>
+    <title>Media Flow Ultra</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #6366f1; }
-        body { font-family: 'Tajawal', sans-serif; transition: background 0.3s; }
-        .dark { background-color: #0f172a; color: #f1f5f9; }
-        .light { background-color: #f8fafc; color: #1e293b; }
+        :root { --p: #6366f1; }
+        body { font-family: 'Tajawal', sans-serif; transition: all 0.3s ease; }
         
-        .card { border-radius: 20px; overflow: hidden; transition: transform 0.2s; border: 1px solid rgba(0,0,0,0.1); }
-        .dark .card { background: #1e293b; border-color: #334155; }
-        .light .card { background: #ffffff; }
-        
-        .media-container { display: flex; overflow-x: auto; gap: 8px; scroll-snap-type: x mandatory; scrollbar-width: none; }
+        /* التحسينات على الوضعين */
+        body.dark { background-color: #0b0f1a; color: #e2e8f0; }
+        body.light { background-color: #f1f5f9; color: #1e293b; }
+
+        .card { border-radius: 24px; transition: 0.3s; position: relative; }
+        .dark .card { background: #161e2d; border: 1px solid #2d3748; }
+        .light .card { background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+
+        /* الكورسيل والنقاط */
+        .media-wrapper { position: relative; border-radius: 20px 20px 0 0; overflow: hidden; }
+        .media-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; }
         .media-container::-webkit-scrollbar { display: none; }
         .media-item { flex: 0 0 100%; scroll-snap-align: start; aspect-ratio: 1/1; position: relative; }
         
+        .dots-container { position: absolute; bottom: 12px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; pointer-events: none; }
+        .dot { width: 6px; height: 6px; background: rgba(255,255,255,0.4); border-radius: 50%; transition: 0.3s; }
+        .dot.active { width: 18px; background: #fff; border-radius: 4px; }
+
+        /* إشعار النسخ (Toast) */
+        #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(100px); 
+                 background: #1e293b; color: white; padding: 12px 24px; border-radius: 50px; 
+                 font-size: 14px; opacity: 0; transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); z-index: 1000; }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .dark #toast { background: #6366f1; }
+
         .tab-content { display: none; }
-        .tab-content.active { display: block; animation: slideUp 0.3s ease-out; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
-<body class="light pb-24">
+<body class="dark pb-24">
 
-    <nav class="sticky top-0 z-50 p-4 flex justify-between items-center bg-inherit border-b border-gray-200 dark:border-gray-700">
-        <div>
-            <h1 class="font-bold text-xl tracking-tight">MEDIA FLOW</h1>
-            <span id="syncStatus" class="text-[10px] opacity-50 font-medium">متصل</span>
+    <div id="toast">تم النسخ بنجاح ✨</div>
+
+    <nav class="sticky top-0 z-50 p-4 flex justify-between items-center backdrop-blur-md bg-inherit/80 border-b border-white/5">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
+                <i data-lucide="layers" class="w-5 h-5"></i>
+            </div>
+            <h1 class="font-bold text-lg tracking-tight">MEDIA FLOW</h1>
         </div>
-        <div class="flex gap-3">
-            <button onclick="toggleTheme()" class="p-2 rounded-full bg-gray-100 dark:bg-gray-800">
-                <i data-lucide="sun" id="themeIcon"></i>
+        <div class="flex gap-2">
+            <button onclick="toggleTheme()" class="p-2.5 rounded-xl bg-gray-500/10 hover:bg-gray-500/20 transition">
+                <i data-lucide="sun" id="themeIcon" class="w-5 h-5 text-amber-400"></i>
             </button>
-            <button onclick="fetchData()" class="p-2 rounded-full bg-gray-100 dark:bg-gray-800">
+            <button onclick="fetchData()" class="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20 transition">
                 <i data-lucide="refresh-cw" class="w-5 h-5"></i>
             </button>
         </div>
     </nav>
 
-    <main class="max-w-2xl mx-auto p-4">
+    <main class="max-w-xl mx-auto p-4">
         
         <div id="viewSection" class="tab-content active space-y-6">
             <div id="contentContainer" class="grid grid-cols-1 gap-6">
@@ -51,37 +70,32 @@
         </div>
 
         <div id="addSection" class="tab-content">
-            <div class="card p-6 space-y-4 shadow-xl">
-                <h2 class="text-xl font-bold mb-4">منشور جديد</h2>
+            <div class="card p-6 space-y-4">
+                <h2 class="text-xl font-bold">منشور جديد</h2>
                 <form id="postForm" class="space-y-4">
-                    <input type="text" id="productName" placeholder="اسم المنتج/المنشور" class="w-full p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border-none outline-none focus:ring-2 ring-indigo-500" required>
+                    <input type="text" id="productName" placeholder="اسم المنتج" class="w-full p-4 rounded-2xl bg-gray-500/5 border border-white/10 outline-none focus:ring-2 ring-indigo-500" required>
                     <div class="grid grid-cols-2 gap-3">
-                        <input type="date" id="date" class="p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border-none outline-none" required>
-                        <select id="contentType" class="p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border-none outline-none">
+                        <input type="date" id="date" class="p-4 rounded-2xl bg-gray-500/5 border border-white/10 outline-none" required>
+                        <select id="contentType" class="p-4 rounded-2xl bg-gray-500/5 border border-white/10 outline-none">
                             <option>ريل</option>
                             <option>بوست</option>
                             <option>ستوري</option>
                         </select>
                     </div>
-                    <textarea id="captionDraft" placeholder="الكابشن..." class="w-full p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border-none h-32 outline-none"></textarea>
-                    <div class="space-y-2">
-                        <label class="text-xs opacity-60">روابط الميديا (افصل بينها بـ |||)</label>
-                        <textarea id="mediaUrls" placeholder="رابط 1 ||| رابط 2..." class="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border-none h-20 outline-none text-xs"></textarea>
-                    </div>
-                    <button type="submit" id="submitBtn" class="w-full bg-indigo-600 text-white font-bold p-4 rounded-xl shadow-lg active:scale-95 transition">إرسال للجدول</button>
+                    <textarea id="captionDraft" placeholder="اكتب الكابشن هنا..." class="w-full p-4 rounded-2xl bg-gray-500/5 border border-white/10 h-32 outline-none"></textarea>
+                    <textarea id="mediaUrls" placeholder="روابط جوجل درايف (افصل بـ |||)" class="w-full p-4 rounded-2xl bg-gray-500/5 border border-white/10 h-20 outline-none text-xs"></textarea>
+                    <button type="submit" id="submitBtn" class="w-full bg-indigo-600 text-white font-bold p-4 rounded-2xl shadow-lg active:scale-95 transition">إضافة للجدول</button>
                 </form>
             </div>
         </div>
     </main>
 
-    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200 dark:border-gray-800 rounded-3xl p-2 flex justify-around shadow-2xl">
-        <button onclick="showTab('viewSection')" class="p-3 text-indigo-500 flex flex-col items-center">
+    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-sm bg-white/10 dark:bg-black/40 backdrop-blur-2xl border border-white/10 rounded-full p-2 flex justify-around shadow-2xl z-50">
+        <button onclick="showTab('viewSection')" class="nav-btn p-4 text-indigo-500 flex flex-col items-center">
             <i data-lucide="layout"></i>
-            <span class="text-[10px]">المحتوى</span>
         </button>
-        <button onclick="showTab('addSection')" class="p-3 text-gray-400 flex flex-col items-center">
+        <button onclick="showTab('addSection')" class="nav-btn p-4 text-gray-400 flex flex-col items-center">
             <i data-lucide="plus-circle"></i>
-            <span class="text-[10px]">إضافة</span>
         </button>
     </nav>
 
@@ -89,12 +103,115 @@
         const API_URL = 'https://script.google.com/macros/s/AKfycbxVfPtEk_Rd35yGbvoBpNzrcc1K_D3f3vs73BJtuekHlKnOgefFWV85-XJ6noQG4GIa/exec';
         
         function toggleTheme() {
-            const b = document.body;
-            b.classList.toggle('light');
-            b.classList.toggle('dark');
-            const isDark = b.classList.contains('dark');
-            document.getElementById('themeIcon').setAttribute('data-lucide', isDark ? 'moon' : 'sun');
+            const body = document.body;
+            const icon = document.getElementById('themeIcon');
+            if(body.classList.contains('dark')) {
+                body.classList.replace('dark', 'light');
+                icon.setAttribute('data-lucide', 'moon');
+            } else {
+                body.classList.replace('light', 'dark');
+                icon.setAttribute('data-lucide', 'sun');
+            }
             lucide.createIcons();
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        }
+
+        function extractDriveId(url) {
+            if(!url) return "";
+            const match = url.match(/(?:id=|\/d\/|preview\/d\/)([\w-]{25,})/);
+            return match ? match[1] : url.trim();
+        }
+
+        function formatMedia(url) {
+            const id = extractDriveId(url);
+            const isVideo = url.toLowerCase().includes('.mov') || url.toLowerCase().includes('.mp4');
+            return {
+                type: isVideo ? 'video' : 'img',
+                // جوجل درايف يولد صورة مصغرة للفيديو تلقائياً عبر هذا الرابط
+                thumb: `https://drive.google.com/thumbnail?id=${id}&sz=w1000`,
+                preview: `https://drive.google.com/file/d/${id}/preview`
+            };
+        }
+
+        async function fetchData() {
+            try {
+                const res = await fetch(API_URL);
+                const data = await res.json();
+                render(data.reverse());
+            } catch(e) { console.log("Fetch Error"); }
+        }
+
+        function updateDots(container, index) {
+            const dots = container.parentElement.querySelectorAll('.dot');
+            dots.forEach((d, i) => d.classList.toggle('active', i === index));
+        }
+
+        function render(items) {
+            const container = document.getElementById('contentContainer');
+            container.innerHTML = items.map(item => {
+                const urls = item.mediaUrls ? item.mediaUrls.split('|||').filter(u => u.trim()) : [];
+                return `
+                <div class="card">
+                    <div class="media-wrapper">
+                        <div class="media-container" onscroll="const idx = Math.round(this.scrollLeft / this.offsetWidth); updateDots(this, Math.abs(idx))">
+                            ${urls.length > 0 ? urls.map(u => {
+                                const media = formatMedia(u);
+                                return `
+                                <div class="media-item">
+                                    ${media.type === 'video' ? 
+                                    `<iframe src="${media.preview}" class="w-full h-full border-none pointer-events-none"></iframe>` : 
+                                    `<img src="${media.thumb}" class="w-full h-full object-cover">`}
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
+                                </div>`;
+                            }).join('') : `<div class="media-item bg-gray-800 flex items-center justify-center"><i data-lucide="image-off" class="text-gray-600"></i></div>`}
+                        </div>
+                        ${urls.length > 1 ? `
+                        <div class="dots-container">
+                            ${urls.map((_, i) => `<div class="dot ${i===0?'active':''}"></div>`).join('')}
+                        </div>` : ''}
+                    </div>
+                    
+                    <div class="p-5 space-y-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-lg leading-tight">${item.productName || 'منشور بدون اسم'}</h3>
+                                <p class="text-[11px] opacity-50 font-medium uppercase mt-1">${item.date} • ${item.contentType}</p>
+                            </div>
+                            <select onchange="handleStatusChange(${item.row_index}, this.value)" 
+                                    class="text-[11px] font-bold py-1.5 px-3 rounded-full border-none bg-gray-500/10 outline-none">
+                                <option ${item.status==='جديد'?'selected':''}>جديد</option>
+                                <option ${item.status==='قيد المراجعة'?'selected':''}>قيد المراجعة</option>
+                                <option ${item.status==='مقبول'?'selected':''}>مقبول</option>
+                                <option ${item.status==='مرفوض'?'selected':''}>مرفوض</option>
+                            </select>
+                        </div>
+                        
+                        <p class="text-sm opacity-70 leading-relaxed line-clamp-2">${item.captionDraft || 'لا يوجد وصف متاح'}</p>
+                        
+                        <button onclick="copyToClipboard('${item.captionDraft}')" class="w-full bg-gray-500/10 hover:bg-indigo-500/20 hover:text-indigo-500 p-3.5 rounded-2xl text-xs font-bold transition flex justify-center items-center gap-2">
+                            <i data-lucide="copy" class="w-4 h-4"></i> نسخ الكابشن
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        async function handleStatusChange(row, val) {
+            showToast("جاري التحديث...");
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateStatus", row_index: row, newStatus: val }) });
+            showToast("تم تحديث الحالة ✅");
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            showToast("تم النسخ للمحافظة ✅");
         }
 
         function showTab(id) {
@@ -103,92 +220,11 @@
             if(id === 'viewSection') fetchData();
         }
 
-        function formatMedia(url) {
-            if(!url) return { type: 'img', src: 'https://via.placeholder.com/400?text=No+Media' };
-            const id = url.includes('id=') ? url.split('id=')[1].split('&')[0] : (url.includes('d/') ? url.split('d/')[1].split('/')[0] : url.trim());
-            
-            // تحقق بسيط من نوع الملف عبر الرابط أو افترض فيديو إذا كان الرابط يحتوي كلمات معينة
-            const isVideo = url.toLowerCase().includes('.mov') || url.toLowerCase().includes('.mp4');
-            
-            return {
-                type: isVideo ? 'video' : 'img',
-                src: isVideo ? `https://drive.google.com/file/d/${id}/preview` : `https://drive.google.com/thumbnail?id=${id}&sz=w800`,
-                raw: `https://drive.google.com/file/d/${id}/view`
-            };
-        }
-
-        async function fetchData() {
-            document.getElementById('syncStatus').innerText = "جاري المزامنة...";
-            try {
-                const res = await fetch(API_URL);
-                const data = await res.json();
-                render(data.reverse());
-                document.getElementById('syncStatus').innerText = "تم التحديث";
-            } catch(e) { document.getElementById('syncStatus').innerText = "خطأ في الاتصال"; }
-        }
-
-        async function updateStatus(rowIndex, newStatus) {
-            document.getElementById('syncStatus').innerText = "جاري الحفظ...";
-            try {
-                await fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify({ action: "updateStatus", row_index: rowIndex, newStatus: newStatus })
-                });
-                document.getElementById('syncStatus').innerText = "تم الحفظ في الجدول";
-            } catch(e) { alert("خطأ في التحديث"); }
-        }
-
-        function render(items) {
-            const container = document.getElementById('contentContainer');
-            container.innerHTML = items.map(item => {
-                const mediaList = item.mediaUrls ? item.mediaUrls.split('|||') : [];
-                return `
-                <div class="card shadow-sm">
-                    <div class="media-container">
-                        ${mediaList.length > 0 ? mediaList.map(url => {
-                            const media = formatMedia(url);
-                            return `
-                            <div class="media-item">
-                                ${media.type === 'video' ? 
-                                `<iframe src="${media.src}" class="w-full h-full border-none"></iframe>` : 
-                                `<img src="${media.src}" class="w-full h-full object-cover">`}
-                                <a href="${media.raw}" target="_blank" class="absolute bottom-2 right-2 bg-black/40 p-2 rounded-full text-white"><i data-lucide="external-link" class="w-4 h-4"></i></a>
-                            </div>`;
-                        }).join('') : `<div class="media-item"><img src="https://via.placeholder.com/400?text=No+Media" class="w-full h-full object-cover"></div>`}
-                    </div>
-                    
-                    <div class="p-4 space-y-3">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="font-bold text-lg leading-tight">${item.productName}</h3>
-                                <p class="text-[10px] opacity-50">${item.date} • ${item.contentType}</p>
-                            </div>
-                            <select onchange="updateStatus(${item.row_index}, this.value)" class="text-xs p-2 rounded-lg bg-gray-100 dark:bg-gray-800 border-none outline-none font-bold">
-                                <option ${item.status === 'جديد' ? 'selected' : ''}>جديد</option>
-                                <option ${item.status === 'قيد المراجعة' ? 'selected' : ''}>قيد المراجعة</option>
-                                <option ${item.status === 'مقبول' ? 'selected' : ''}>مقبول</option>
-                                <option ${item.status === 'مرفوض' ? 'selected' : ''}>مرفوض</option>
-                            </select>
-                        </div>
-                        
-                        <p class="text-sm opacity-80 whitespace-pre-wrap line-clamp-3">${item.captionDraft || ''}</p>
-                        
-                        <div class="flex gap-2 pt-2">
-                            <button onclick="navigator.clipboard.writeText('${item.captionDraft}')" class="flex-1 bg-gray-100 dark:bg-gray-800 p-3 rounded-xl text-xs font-bold flex justify-center items-center gap-2">
-                                <i data-lucide="copy" class="w-3 h-3"></i> نسخ الكابشن
-                            </button>
-                        </div>
-                    </div>
-                </div>`;
-            }).join('');
-            lucide.createIcons();
-        }
-
+        // إرسال البيانات
         document.getElementById('postForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            btn.disabled = true; btn.innerText = "جاري الإرسال...";
+            btn.disabled = true; btn.innerText = "جاري الحفظ...";
             
             const payload = {
                 productName: document.getElementById('productName').value,
@@ -197,11 +233,11 @@
                 contentType: document.getElementById('contentType').value,
                 captionDraft: document.getElementById('captionDraft').value,
                 mediaUrls: document.getElementById('mediaUrls').value,
-                responsible: 'فريق السوشال ميديا'
+                responsible: 'الفريق'
             };
 
             await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            alert("تمت الإضافة!");
+            showToast("تمت الإضافة بنجاح 🚀");
             document.getElementById('postForm').reset();
             btn.disabled = false; btn.innerText = "إرسال للجدول";
             showTab('viewSection');
